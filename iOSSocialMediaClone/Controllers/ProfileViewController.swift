@@ -6,12 +6,12 @@
 //
 
 import UIKit
-import SwiftUI
+
 
 class ProfileViewController: UIViewController, UIGestureRecognizerDelegate {
 
     let profileHeaderView = ProfileHeaderView()
-    
+
    
     private lazy var tableView: UITableView = {
         let table = UITableView()
@@ -19,14 +19,14 @@ class ProfileViewController: UIViewController, UIGestureRecognizerDelegate {
         table.dataSource = self
         table.register(CustomTableViewCell.self, forCellReuseIdentifier: CustomTableViewCell.identifier)
         table.register(TableHeader.self, forHeaderFooterViewReuseIdentifier: "header")
-        table.register(TableFooter.self, forHeaderFooterViewReuseIdentifier: "footer")
+        table.register(TableFooter.self, forHeaderFooterViewReuseIdentifier: TableFooter.identifier)
         table.rowHeight = 300
         table.sectionHeaderTopPadding = 0
         table.translatesAutoresizingMaskIntoConstraints = false
         return table
     }()
     
-    private lazy var tapRecogniser: UITapGestureRecognizer = {
+     private lazy var tapRecogniser: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer()
         gesture.numberOfTapsRequired = 1
         gesture.delegate = self
@@ -112,10 +112,10 @@ class ProfileViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
     
-    
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.sectionInset = UIEdgeInsets(top: 30, left: 12, bottom: 12, right: 12)
+        layout.minimumInteritemSpacing = 8
+        layout.sectionInset = UIEdgeInsets(top: 29, left: 12, bottom: 12, right: 12)
         layout.headerReferenceSize = CGSize(width: self.view.frame.width, height: 12)
         let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collection.translatesAutoresizingMaskIntoConstraints = false
@@ -138,7 +138,7 @@ class ProfileViewController: UIViewController, UIGestureRecognizerDelegate {
 
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView(frame: .zero)
-        scrollView.backgroundColor = .lightGray
+        scrollView.backgroundColor = .white
         scrollView.contentSize = contentSize
         scrollView.frame = self.view.bounds
         scrollView.autoresizingMask = .flexibleHeight
@@ -152,17 +152,15 @@ class ProfileViewController: UIViewController, UIGestureRecognizerDelegate {
         view.backgroundColor = .white
         view.addSubview(scrollView)
         scrollView.addSubview(containerView)
+        scrollView.addSubview(newView)
         containerView.addSubview(profileHeaderView)
         containerView.addSubview(collectionView)
+        containerView.addSubview(tableView)
         
-        containerView.addSubview(newView)
-        
-        profileHeaderView.addSubview(tableView)
         profileHeaderView.backgroundColor = .gray
         profileHeaderView.translatesAutoresizingMaskIntoConstraints = false
-        
         profileHeaderView.profileImageView.addGestureRecognizer(tapRecogniser)
-       
+
         let safeArea = containerView.safeAreaLayoutGuide
         
         NSLayoutConstraint.activate([
@@ -204,7 +202,7 @@ extension ProfileViewController: UITableViewDataSource, UITableViewDelegate {
         if let customImage = UIImage(named: posts[indexPath.section].image) {
             cell.apply(customImage: customImage)
         }
-         
+        
        return cell
     }
 
@@ -216,29 +214,129 @@ extension ProfileViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         
-        let footer = tableView.dequeueReusableHeaderFooterView(withIdentifier: "footer") as? TableFooter
-        footer?.apply(likes: String("Likes: \(posts[section].likes)"))
-        footer?.apply(views: String("Views: \(posts[section].views)"))
-        footer?.apply(post: posts[section].description)
-        return footer
+        guard let footer = tableView.dequeueReusableHeaderFooterView(withIdentifier: TableFooter.identifier) as? TableFooter else {
+            let footer = tableView.dequeueReusableHeaderFooterView(withIdentifier: "footer")
+            return footer
+        }
         
+        footer.apply(likes: String("Likes: \(posts[section].likes)"))
+        footer.apply(views: String("Views: \(posts[section].views)"))
+        footer.apply(post: posts[section].description)
+        
+        footer.buttonTapped = {
+            footer.apply(likes: String("Likes: \(posts[section].likes += 1)"))
+            self.tableView.reloadData()
+        }
+            
+        return footer
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard tableView.dequeueReusableCell(withIdentifier: CustomTableViewCell.identifier, for: indexPath) is CustomTableViewCell else { return }
+        
+        if let customImage = UIImage(named: posts[indexPath.section].image) {
+            self.imageTapped(image: customImage, post: posts[indexPath.section].description, author: posts[indexPath.section].author, numberOfLikes: posts[indexPath.section].likes, numberOfViews: posts[indexPath.section].views)
+            posts[indexPath.section].views += 1
+            tableView.reloadData()
+        }
+    }
     
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return UITableView.automaticDimension
+    func imageTapped(image: UIImage, post: String, author: String, numberOfLikes: Int, numberOfViews: Int) {
+   
+        let myView = UIView()
+        myView.frame = UIScreen.main.bounds
+        myView.backgroundColor = .white
+        myView.isUserInteractionEnabled = true
+        
+        let customImage = UIImageView()
+        customImage.contentMode = .scaleAspectFit
+        customImage.image = image
+        customImage.backgroundColor = .black
+        customImage.translatesAutoresizingMaskIntoConstraints = false
+        
+        let labelText = UILabel()
+        labelText.text = post
+        labelText.backgroundColor = .white
+        labelText.translatesAutoresizingMaskIntoConstraints = false
+        labelText.font = UIFont.systemFont(ofSize: 14)
+        labelText.textColor = .systemGray
+        labelText.textAlignment = .left
+        labelText.numberOfLines = 0
+        labelText.lineBreakMode = .byWordWrapping
+        
+        let likesLabel = UILabel()
+        likesLabel.font = UIFont.systemFont(ofSize: 16)
+        likesLabel.textColor = .black
+        likesLabel.numberOfLines = 2
+        likesLabel.text = "Likes: \(numberOfLikes)"
+        likesLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let viewsLabel = UILabel()
+        viewsLabel.font = UIFont.systemFont(ofSize: 16)
+        viewsLabel.textColor = .black
+        viewsLabel.numberOfLines = 2
+        viewsLabel.text = "Views: \(numberOfViews)"
+        viewsLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let authorLabel = UILabel(frame: .zero)
+        authorLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        authorLabel.textAlignment = .left
+        authorLabel.numberOfLines = 0
+        authorLabel.text = author
+        authorLabel.translatesAutoresizingMaskIntoConstraints = false
+    
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullscreen))
+        self.view.addSubview(myView)
+        myView.addGestureRecognizer(tapGesture)
+        myView.addSubview(labelText)
+        myView.addSubview(customImage)
+        myView.addSubview(likesLabel)
+        myView.addSubview(viewsLabel)
+        myView.addSubview(authorLabel)
+        self.navigationController?.isNavigationBarHidden = true
+        self.tabBarController?.tabBar.isHidden = true
+        
+        NSLayoutConstraint.activate([
+        
+            authorLabel.topAnchor.constraint(equalTo: myView.topAnchor, constant: 100),
+            authorLabel.trailingAnchor.constraint(equalTo: myView.trailingAnchor, constant: -20),
+            authorLabel.leadingAnchor.constraint(equalTo: myView.leadingAnchor, constant: 20),
+            authorLabel.bottomAnchor.constraint(equalTo: customImage.topAnchor, constant: -20),
+            
+            customImage.topAnchor.constraint(equalTo: authorLabel.bottomAnchor, constant: 20),
+            customImage.leadingAnchor.constraint(equalTo: myView.leadingAnchor),
+            customImage.trailingAnchor.constraint(equalTo: myView.trailingAnchor),
+            customImage.bottomAnchor.constraint(equalTo: myView.bottomAnchor, constant: -280),
+            
+            labelText.topAnchor.constraint(equalTo: customImage.bottomAnchor),
+            labelText.bottomAnchor.constraint(equalTo: likesLabel.topAnchor),
+            labelText.trailingAnchor.constraint(equalTo: myView.trailingAnchor, constant: -8),
+            labelText.leadingAnchor.constraint(equalTo: myView.leadingAnchor, constant: 8),
+            
+            likesLabel.topAnchor.constraint(equalTo: labelText.bottomAnchor),
+            likesLabel.bottomAnchor.constraint(equalTo: myView.bottomAnchor, constant: -70),
+            likesLabel.leadingAnchor.constraint(equalTo: myView.leadingAnchor, constant: 16),
+          
+            viewsLabel.topAnchor.constraint(equalTo: labelText.bottomAnchor),
+            viewsLabel.bottomAnchor.constraint(equalTo: myView.bottomAnchor, constant: -70),
+            viewsLabel.trailingAnchor.constraint(equalTo: myView.trailingAnchor, constant: -16),
+        
+        ])
+                
+    }
+    
+    @objc func dismissFullscreen(_ sender: UITapGestureRecognizer) {
+        self.navigationController?.isNavigationBarHidden = false
+        self.tabBarController?.tabBar.isHidden = false
+        sender.view?.removeFromSuperview()
     }
     
     func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
         50
     }
     
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
     func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
-        50
+        100
     }
 }
 
@@ -264,7 +362,7 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: collectionView.frame.width / 4.6, height: collectionView.frame.width / 5.6)
+        return CGSize(width: (collectionView.frame.width) / 4.6, height: (collectionView.frame.width) / 5.6)
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -282,20 +380,3 @@ extension ProfileViewController: UICollectionViewDelegateFlowLayout, UICollectio
 }
 
 
-struct VCPreview: PreviewProvider {
-    
-    static var previews: some View {
-        VCContainerView()
-    }
-    
-    struct VCContainerView: UIViewControllerRepresentable {
-        
-        typealias UIViewControllerType = UIViewController
-        
-        func makeUIViewController(context: Context) -> UIViewController {
-            return ProfileViewController()
-        }
-
-        func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-    }
-}

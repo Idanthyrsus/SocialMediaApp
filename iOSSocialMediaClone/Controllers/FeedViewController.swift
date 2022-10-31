@@ -54,7 +54,7 @@ class FeedViewController: UIViewController {
         view.backgroundColor = .lightGray
 
         stackView.addArrangedSubview(button)
-        stackView.addArrangedSubview(button1)
+       // stackView.addArrangedSubview(button1)
         view.addSubview(stackView)
         NSLayoutConstraint.activate([
             stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),

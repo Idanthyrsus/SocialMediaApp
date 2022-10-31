@@ -10,5 +10,5 @@ import Foundation
 struct LoginDetails {
     let email = "myEmail@mail.ru"
     let phone = "+79261112233"
-    let password = "1234567"
+    let password = "12345678"
 }

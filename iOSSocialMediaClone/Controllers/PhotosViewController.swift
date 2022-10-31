@@ -11,9 +11,7 @@ class PhotosViewController: UIViewController {
     
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
-        layout.sectionInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collection.translatesAutoresizingMaskIntoConstraints = false
         collection.register(GalleryCollectionViewCell.self, forCellWithReuseIdentifier: GalleryCollectionViewCell.identifier)
         collection.dataSource = self
         collection.delegate = self
@@ -51,6 +49,25 @@ extension PhotosViewController: UICollectionViewDelegateFlowLayout, UICollection
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-       return CGSize(width: collectionView.frame.width / 3.3, height: collectionView.frame.width / 3.3)
+        return CGSize(width: collectionView.frame.width / 3.3, height: collectionView.frame.width / 3.3)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        8
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        8
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let viewController = ImageViewController()
+        viewController.selectedIndex = indexPath.row
+        viewController.imageArray = photosData
+        pushView(viewController: viewController)
     }
 }
